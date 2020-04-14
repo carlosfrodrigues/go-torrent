@@ -67,13 +67,6 @@ func (t *Torrent) Download() ([]byte, error) {
 	l.Rows = []string{
 		"Starting...",
 	}
-	
-	p := widgets.NewParagraph()
-	p.Title = "File"
-	p.Text = t.Name
-	p.SetRect(0, 5, 50, 5)
-	p.TextStyle.Fg = ui.ColorWhite
-	p.BorderStyle.Fg = ui.ColorCyan
 
 	g := widgets.NewGauge()
 	g.Title = "Progress"
@@ -82,7 +75,7 @@ func (t *Torrent) Download() ([]byte, error) {
 	g.BarColor = ui.ColorBlue
 	g.Label = fmt.Sprintf("%v%% (Downloading)", g.Percent)
 
-	ui.Render(g, l, p)
+	ui.Render(g, l)
 	//interface end
 
 	for index, hash := range t.Pieces {
@@ -107,7 +100,6 @@ func (t *Torrent) Download() ([]byte, error) {
 
 		percent := float64(donePieces) / float64(len(t.Pieces)) * 100
 		numWorkers := runtime.NumGoroutine() - 1
-		//log.Printf("(%0.2f%%) Downloaded piece #%d from %d peers\n", percent, res.index, numWorkers)
 		//interface		
 		g.Percent = int(percent)
 		g.Label = fmt.Sprintf("%0.4f%% (Downloading)", percent)
@@ -117,8 +109,7 @@ func (t *Torrent) Download() ([]byte, error) {
 		if(len(l.Rows) > 6){
 			l.Rows = l.Rows[1:]
 		}
-		//l.ScrollPageDown()
-		ui.Render(g, l, p)
+		ui.Render(g, l)
 		//interface end
 		
 		if !(time.Now().Before(timeRefresh)) {
