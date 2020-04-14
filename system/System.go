@@ -60,21 +60,29 @@ func (t *Torrent) Download() ([]byte, error) {
 	defer ui.Close()
 
 	l := widgets.NewList()
-	l.TextStyle = ui.NewStyle(ui.ColorRed)
 	l.WrapText = false
 	l.Title = "Log"
-	l.SetRect(0, 0, 100, 8)
+	l.SetRect(0, 0, 50, 8)
+	l.TextStyle = ui.NewStyle(ui.ColorRed)
 	l.Rows = []string{
 		"Starting...",
 	}
+	
+	p := widgets.NewParagraph()
+	p.Title = "File"
+	p.Text = t.Name
+	p.SetRect(0, 5, 50, 5)
+	p.TextStyle.Fg = ui.ColorWhite
+	p.BorderStyle.Fg = ui.ColorCyan
+
 	g := widgets.NewGauge()
-	g.Title = "Download"
+	g.Title = "Progress"
 	g.SetRect(0, 11, 50, 14)
 	g.Percent = 0
 	g.BarColor = ui.ColorBlue
 	g.Label = fmt.Sprintf("%v%% (Downloading)", g.Percent)
 
-	ui.Render(g, l)
+	ui.Render(g, l, p)
 	//interface end
 
 	for index, hash := range t.Pieces {
@@ -85,10 +93,10 @@ func (t *Torrent) Download() ([]byte, error) {
 	for _, peer := range t.Peers {
 		go t.startDownloadWorker(peer, workQueue, results)
 	}
-	/*
+	
 	interval := 30000000 * time.Microsecond
 	timeRefresh := time.Now().Add(interval)
-	*/
+
 	buf := make([]byte, t.Length)
 	donePieces := 0
 	for donePieces < len(t.Pieces) {
@@ -102,23 +110,27 @@ func (t *Torrent) Download() ([]byte, error) {
 		//log.Printf("(%0.2f%%) Downloaded piece #%d from %d peers\n", percent, res.index, numWorkers)
 		//interface		
 		g.Percent = int(percent)
-		g.Label = fmt.Sprintf("%v%% (Downloading)", percent)
-		result := fmt.Sprintf("(%0.2f%%) Downloaded piece #%d from %d peers", percent, res.index, numWorkers)
+		g.Label = fmt.Sprintf("%0.4f%% (Downloading)", percent)
+		result := fmt.Sprintf("(%0.2f%%) Piece #%d downloaded. Total: %d peers", percent, res.index, numWorkers)
+		l.TextStyle = ui.NewStyle(ui.ColorRed)
 		l.Rows = append(l.Rows, result)
 		if(len(l.Rows) > 6){
 			l.Rows = l.Rows[1:]
 		}
-		ui.Render(g, l)
+		//l.ScrollPageDown()
+		ui.Render(g, l, p)
 		//interface end
-		/*
+		
 		if !(time.Now().Before(timeRefresh)) {
 			newPeers := refreshPeers(t.Url, t.Peers)
 			//insert new workers with the new Peers
+			if(newPeers != nil || len(newPeers) == 0){
 			for _, peer := range newPeers {
 				go t.startDownloadWorker(peer, workQueue, results)
 			}
-            timeRefresh = time.Now().Add(interval)
-        }*/
+			timeRefresh = time.Now().Add(interval)
+			}
+        }
 	}
 	close(workQueue)
 
@@ -128,6 +140,8 @@ func (t *Torrent) Download() ([]byte, error) {
 func refreshPeers(url string, currentPeers []Peer) []Peer {
 	request := <-GetResponseTracker(url)
 	var newPeers []Peer
+	if(request != nil){
+	if(request.Peers != nil || len(request.Peers) == 0){
 	for _, peer := range request.Peers{
 		found := false 
 		for _, peerCurrent := range currentPeers{
@@ -139,7 +153,8 @@ func refreshPeers(url string, currentPeers []Peer) []Peer {
 			newPeers = append(newPeers, peer)
 		}
 	}
-
+	}
+	}
 	return newPeers
 }
 
