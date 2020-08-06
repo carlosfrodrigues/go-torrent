@@ -65,11 +65,11 @@ func makeHandshake(conn net.Conn, peerId string, infoHash []byte) ([]byte, error
 func generateHandshake(peerId string, infoHash []byte) []byte{
 	pstr := "BitTorrent protocol"
 	hs := make([]byte, len(pstr)+49)
-    hs[0] = byte(len(pstr))
-    curr := 1
-    curr += copy(hs[curr:], pstr)
-    curr += copy(hs[curr:], make([]byte, 8))
-    curr += copy(hs[curr:], infoHash[:])
+	hs[0] = byte(len(pstr))
+	curr := 1
+	curr += copy(hs[curr:], pstr)
+	curr += copy(hs[curr:], make([]byte, 8))
+	curr += copy(hs[curr:], infoHash[:])
 	curr += copy(hs[curr:], []byte(peerId[:]))
 	return hs
 }
